@@ -51,16 +51,8 @@ namespace UniqueEmailAddresses
                     var currentField = iDf.GetFieldByPosition(field);
                     if (field == headerField)
                     {
-                        var header = new SmtpHeader(currentField, "®");
-                        foreach (var customHeader in CustomHeaders.Values)
-                        {
-                            var currentHeaderFieldList = header.GetCustomField(customHeader);
-                            //most of the time where will only be one item in the currentHeaderFieldList
-                            foreach (var currentHeaderField in currentHeaderFieldList)
-                            {
-                                currentAddresses.AddRange(DelimitedFile.ParseMultiValueField(currentHeaderField, ',', true, true));
-                            }
-                        }
+                        var header = new CitiSmtpHeader(currentField, "®");
+                        currentAddresses.AddRange(header.XZantazRecipValues);
                     }
                     else
                     {
