@@ -60,29 +60,58 @@ namespace UniqueEmailAddresses
         {
             var wholeField = GetXZantazRecip();
             var retVal = new List<string>();
+            var buffer = new StringBuilder();
+            var openQuote = false;
             foreach (var fieldInstance in wholeField)
             {
-                var cleanFieldInstance = fieldInstance.Replace("\t", string.Empty);
-                var explodedCleanFieldInstance = cleanFieldInstance.Split(new[] { ',' }).ToList();
-                var buffer = new StringBuilder();
-                for (var i = 0; i < explodedCleanFieldInstance.Count; i++)
+                for (var i = 0; i < fieldInstance.Length; i++)
                 {
-                    if (explodedCleanFieldInstance[i].StartsWith(@"""") && explodedCleanFieldInstance[i].EndsWith(","))
+                    var character = fieldInstance[i];
+                    char? trailingCharacterOne = null;
+                    if (i > 0) trailingCharacterOne = fieldInstance[i - 1];
+                    char? trailingCharacterTwo = null;
+                    if (i > 1) trailingCharacterTwo = fieldInstance[i - 2];
+                    if (character != '"' && character != ',')
                     {
-                        buffer.Append(explodedCleanFieldInstance);
+                        buffer.Append(character);
                         continue;
                     }
-                    if (buffer.Length > 0)
+                    if (character == '"')
                     {
-                        buffer.Append(explodedCleanFieldInstance[i]);
+                        buffer.Append(character);
+                        if (trailingCharacterOne == '"' && openQuote)
+                        {
+                            openQuote = false;
+                            continue;
+                        }
+                        if (trailingCharacterOne == '"' && trailingCharacterTwo == '"')
+                        {
+                            continue;
+                        }
+                        if (trailingCharacterOne == '"')
+                        {
+                            openQuote = true;
+                            continue;
+                        }
+                    }
+                    if (character == ',' && openQuote)
+                    {
+                        buffer.Append(character);
+                        continue;
+                    }
+                    if (character == ',')
+                    {
                         retVal.Add(buffer.ToString());
                         buffer.Clear();
-                        continue;
                     }
-                    retVal.Add(explodedCleanFieldInstance[i]);
+                }
+                if (buffer.Length > 0)
+                {
+                    retVal.Add(buffer.ToString());
+                    buffer.Clear();
                 }
             }
-            return retVal;
+            return retVal.Select(v => v.Trim()).Select(u => u.Replace("\t", " ")).ToList();
         }
 
         #endregion

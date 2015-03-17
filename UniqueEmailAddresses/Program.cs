@@ -60,30 +60,89 @@ namespace UniqueEmailAddresses
                     }
                     foreach (var address in currentAddresses)
                     {
+                        //if (!uniqueAddresses.Contains(address)) uniqueAddresses.Add(address);
+                        //TODO: see if can get comparison working faster than this at this stage (real hit is the comparing every single string in the list)
                         if (uniqueAddresses.Count == 0)
                         {
                             uniqueAddresses.Add(address);
-                            break;
+                            continue;
+                        }
+                        var minimumStringComparison = string.Compare(address, uniqueAddresses[0], StringComparison.InvariantCultureIgnoreCase);
+                        if (minimumStringComparison == 0) continue;
+                        if (minimumStringComparison < 0)
+                        {
+                            uniqueAddresses.Insert(0, address);
+                            continue;
+                        }
+                        var maximumStringComparison = string.Compare(address, uniqueAddresses.Last(), StringComparison.InvariantCultureIgnoreCase);
+                        if (maximumStringComparison == 0) continue;
+                        if (maximumStringComparison > 0)
+                        {
+                            uniqueAddresses.Add(address);
+                            continue;
+                        }
+                        var lowerBound = 0;
+                        var upperBound = uniqueAddresses.Count - 1;
+                        var located = false;
+                        while (!located)
+                        {
+                            if (upperBound - lowerBound <= 1)
+                            {
+                                located = true;
+                                uniqueAddresses.Insert(upperBound, address);
+                                upperBound = uniqueAddresses.Count - 1;
+                                continue;
+                            }
+                            var midPoint = (int)Math.Round((double)((upperBound - lowerBound) / 2) + lowerBound, 0);
+                            if (string.Compare(address, uniqueAddresses[midPoint], StringComparison.InvariantCultureIgnoreCase) == 0)
+                            {
+                                located = true;
+                                continue;
+                            }
+                            if (string.Compare(address, uniqueAddresses[lowerBound], StringComparison.InvariantCultureIgnoreCase) > 0 && string.Compare(address, uniqueAddresses[midPoint], StringComparison.InvariantCultureIgnoreCase) < 0)
+                            {
+                                upperBound = midPoint;
+                                continue;
+                            }
+                            if (string.Compare(address, uniqueAddresses[midPoint], StringComparison.InvariantCultureIgnoreCase) > 0 && string.Compare(address, uniqueAddresses[upperBound], StringComparison.InvariantCultureIgnoreCase) < 0)
+                            {
+                                lowerBound = midPoint;
+                                continue;
+                            }
+                        }
+                        /*if (uniqueAddresses.Count == 0)
+                        {
+                            uniqueAddresses.Add(address);
+                            continue;
                         }
                         var stringRelationship = string.Compare(address, uniqueAddresses[0],
                             StringComparison.InvariantCultureIgnoreCase);
                         if (stringRelationship == 0)
                         {
-                            break;
+                            continue;
                         }
                         if (stringRelationship < 0)
                         {
                             uniqueAddresses.Insert(0, address);
-                            break;
+                            continue;
                         }
                         if (stringRelationship > 0)
                         {
-                            uniqueAddresses.Add(address);
-                        }
+                            var firstNextAddress = uniqueAddresses.FirstOrDefault(a => string.Compare(address, a) <= 0);
+                            if (firstNextAddress == null)
+                            {
+                                uniqueAddresses.Add(address);
+                                continue;
+                            }
+                            var location = uniqueAddresses.IndexOf(firstNextAddress);
+                            if (string.Compare(address, uniqueAddresses[location], StringComparison.InvariantCultureIgnoreCase) == 0) continue;
+                            uniqueAddresses.Insert(location, address);
+                        }*/
                     }
                 }
                 iDf.GetNextRecord();
             }
+            //uniqueAddresses.Sort();
             using (var str = new StreamWriter(outPath))
             {
                 foreach (var address in uniqueAddresses)
